@@ -154,7 +154,7 @@ for modelname, net in zip(["ResNet18", "ResNeXt29_2x64d"], [ResNet18(), ResNeXt2
 
         return np.mean(batch_losses), np.mean(batch_errs), np.mean(batch_accs)
 
-    nepochs = 400
+    nepochs = 300
     train_err = []
     train_loss = []
     train_acc = []
