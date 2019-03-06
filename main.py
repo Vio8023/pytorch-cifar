@@ -153,7 +153,7 @@ for modelname, net in zip(["ResNet18", "ResNeXt29_2x64d"], [ResNet18(), ResNeXt2
 
         return np.mean(batch_losses), np.mean(batch_errs), np.mean(batch_accs)
 
-    nepochs = 1
+    nepochs = 400
     train_err = []
     train_loss = []
     train_acc = []
@@ -201,7 +201,7 @@ for modelname, net in zip(["ResNet18", "ResNeXt29_2x64d"], [ResNet18(), ResNeXt2
 
     try:
         PATH = fn+"_save state"
-        torch.save(nn.state_dict(), PATH)
+        torch.save(net.state_dict(), PATH)
     except Exception as e:
         print("save state failed:", e)
 
