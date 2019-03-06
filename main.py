@@ -65,6 +65,7 @@ classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship'
 # net = DPN92()
 # net = ShuffleNetG2()
 # net = SENet18()
+# for modelname, net in zip(["ResNeXt29_2x64d"], [ResNeXt29_2x64d()]):
 for modelname, net in zip(["ResNet18", "ResNeXt29_2x64d"], [ResNet18(), ResNeXt29_2x64d()]):
     logf = open("log_{}".format(modelname), "a+")
     # Training
