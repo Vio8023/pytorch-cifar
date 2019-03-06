@@ -1,4 +1,7 @@
 '''Train CIFAR10 with PyTorch.'''
+import sys
+sys.path.insert(0, "./")
+sys.path.insert(0, "./models")
 from __future__ import print_function
 
 import torch
