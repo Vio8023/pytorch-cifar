@@ -20,9 +20,9 @@ import pickle
 from models import *
 # from utils import progress_bar
 
-
+default_lr = 0.1
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
-parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
+parser.add_argument('--lr', default=default_lr, type=float, help='learning rate')
 parser.add_argument('--resume', '-r', action='store_true', help='resume from checkpoint')
 args = parser.parse_args()
 
@@ -156,7 +156,7 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
 
         return np.mean(batch_losses), np.mean(batch_errs), np.mean(batch_accs)
 
-    nepochs = 160
+    nepochs = 1
     train_err = []
     train_loss = []
     train_acc = []
@@ -182,7 +182,8 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
 
-    update_lr = {80: 0.01, 120: 0.001}
+    update_lr = {0.5*nepochs: default_lr*0.1, 0.75*nepochs: default_lr*0.01}
+
     for epoch in range(start_epoch, start_epoch+nepochs):
         l, e, a = train(epoch)
         train_loss.append(l)
