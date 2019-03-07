@@ -21,6 +21,7 @@ from models import *
 # from utils import progress_bar
 
 default_lr = 0.1
+default_wd = 1e-4
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--lr', default=default_lr, type=float, help='learning rate')
 parser.add_argument('--resume', '-r', action='store_true', help='resume from checkpoint')
@@ -180,7 +181,7 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
         start_epoch = checkpoint['epoch']
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
+    optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=default_wd)
 
     update_lr = {0.5*nepochs: default_lr*0.1, 0.75*nepochs: default_lr*0.01}
 
@@ -195,7 +196,7 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
         val_acc.append(ta)
         if epoch in update_lr:
             print("update learning rate to {}".format(update_lr[epoch]))
-            optimizer = optim.SGD(net.parameters(), lr=update_lr[epoch], momentum=0.9, weight_decay=1e-4)
+            optimizer = optim.SGD(net.parameters(), lr=update_lr[epoch], momentum=0.9, weight_decay=default_wd)
 
     result = {"train_err": train_err, "train_loss": train_loss, "train_acc": train_acc,\
               "val_loss": val_loss, "val_err": val_err, "val_acc": val_acc}
