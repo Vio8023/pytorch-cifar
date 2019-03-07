@@ -67,9 +67,10 @@ classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship'
 # net = SENet18()
 # for modelname, net in zip(["ResNeXt29_2x64d"], [ResNeXt29_2x64d()]):
 for modelname, net in zip(["ResNet18", "ResNeXt29_2x64d"], [ResNet18(), ResNeXt29_2x64d()]):
-    logf = open("log_{}".format(modelname), "a+")
+    logf = open("log_160_{}".format(modelname), "a+")
     # Training
     def train(epoch):
+        logf.write('\nEpoch: %d' % epoch)
         print('\nEpoch: %d' % epoch)
         net.train()
         train_loss = 0
@@ -128,9 +129,9 @@ for modelname, net in zip(["ResNet18", "ResNeXt29_2x64d"], [ResNet18(), ResNeXt2
 
                 loss = test_loss/(batch_idx+1)
                 acc = 100.*correct/total
-                logf.write('[%d] Loss: %.3f | Acc: %.3f%% (%d/%d)\n'
+                logf.write('[%d] Val Loss: %.3f | Acc: %.3f%% (%d/%d)\n'
                     % (batch_idx, loss, acc, correct, total))
-                print('[%d] Loss: %.3f | Acc: %.3f%% (%d/%d)'
+                print('[%d] Val Loss: %.3f | Acc: %.3f%% (%d/%d)'
                     % (batch_idx, loss, acc, correct, total))
                 batch_errs.append(1-acc)
                 batch_accs.append(acc)
@@ -149,12 +150,12 @@ for modelname, net in zip(["ResNet18", "ResNeXt29_2x64d"], [ResNet18(), ResNeXt2
             }
             if not os.path.isdir('checkpoint'):
                 os.mkdir('checkpoint')
-            torch.save(state, './checkpoint/ckpt.t7')
+            torch.save(state, './checkpoint/ckpt_160.t7')
             best_acc = acc
 
         return np.mean(batch_losses), np.mean(batch_errs), np.mean(batch_accs)
 
-    nepochs = 300
+    nepochs = 160
     train_err = []
     train_loss = []
     train_acc = []
@@ -172,7 +173,7 @@ for modelname, net in zip(["ResNet18", "ResNeXt29_2x64d"], [ResNet18(), ResNeXt2
         # Load checkpoint.
         print('==> Resuming from checkpoint..')
         assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
-        checkpoint = torch.load('./checkpoint/ckpt.t7')
+        checkpoint = torch.load('./checkpoint/ckpt_160.t7')
         net.load_state_dict(checkpoint['net'])
         best_acc = checkpoint['acc']
         start_epoch = checkpoint['epoch']
@@ -180,7 +181,7 @@ for modelname, net in zip(["ResNet18", "ResNeXt29_2x64d"], [ResNet18(), ResNeXt2
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
 
-    update_lr = {150: 0.01, 250: 0.001}
+    update_lr = {80: 0.01, 120: 0.001}
     for epoch in range(start_epoch, start_epoch+nepochs):
         l, e, a = train(epoch)
         train_loss.append(l)
@@ -191,7 +192,8 @@ for modelname, net in zip(["ResNet18", "ResNeXt29_2x64d"], [ResNet18(), ResNeXt2
         val_err.append(te)
         val_acc.append(ta)
         if epoch in update_lr:
-            optimizer = optim.SGD(net.parameters(), lr=update_lr[epoch], momentum=0.9, weight_decay=5e-4)
+            print("update learning rate to {}".format(update_lr[epoch]))
+            optimizer = optim.SGD(net.parameters(), lr=update_lr[epoch], momentum=0.9, weight_decay=1e-4)
 
     result = {"train_err": train_err, "train_loss": train_loss, "train_acc": train_acc,\
               "val_loss": val_loss, "val_err": val_err, "val_acc": val_acc}
