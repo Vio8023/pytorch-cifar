@@ -66,7 +66,8 @@ classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship'
 # net = ShuffleNetG2()
 # net = SENet18()
 # for modelname, net in zip(["ResNeXt29_2x64d"], [ResNeXt29_2x64d()]):
-for modelname, net in zip(["ResNet18", "ResNeXt29_2x64d"], [ResNet18(), ResNeXt29_2x64d()]):
+# for modelname, net in zip(["ResNet18", "ResNeXt29_2x64d"], [ResNet18(), ResNeXt29_2x64d()]):
+for modelname, net in zip(["ResNet18"], [ResNet18()]):
     logf = open("log_160_{}".format(modelname), "a+")
     # Training
     def train(epoch):
@@ -203,7 +204,7 @@ for modelname, net in zip(["ResNet18", "ResNeXt29_2x64d"], [ResNet18(), ResNeXt2
     fo.close()
 
     try:
-        PATH = fn+"_save state"
+        PATH = fn+"_save_state_160"
         torch.save(net.state_dict(), PATH)
     except Exception as e:
         print("save state failed:", e)
