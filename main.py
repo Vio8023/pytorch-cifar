@@ -68,6 +68,8 @@ classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship'
 # net = SENet18()
 # for modelname, net in zip(["ResNeXt29_2x64d"], [ResNeXt29_2x64d()]):
 # for modelname, net in zip(["ResNet18", "ResNeXt29_2x64d"], [ResNet18(), ResNeXt29_2x64d()]):
+nepochs = 160
+checkpoint_savename = './checkpoint/ckpt_resnet_paper_{}.t7'.format(nepochs)
 for modelname, net in zip(["ResNet20"], [ResNet20()]):
     logf = open("log_160_{}".format(modelname), "a+")
     # Training
@@ -152,12 +154,11 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
             }
             if not os.path.isdir('checkpoint'):
                 os.mkdir('checkpoint')
-            torch.save(state, './checkpoint/ckpt_160.t7')
+            torch.save(state, checkpoint_savename+str(epoch))
             best_acc = acc
 
         return np.mean(batch_losses), np.mean(batch_errs), np.mean(batch_accs)
 
-    nepochs = 160
     train_err = []
     train_loss = []
     train_acc = []
@@ -175,7 +176,7 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
         # Load checkpoint.
         print('==> Resuming from checkpoint..')
         assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
-        checkpoint = torch.load('./checkpoint/ckpt_160.t7')
+        checkpoint = torch.load(checkpoint_savename)
         net.load_state_dict(checkpoint['net'])
         best_acc = checkpoint['acc']
         start_epoch = checkpoint['epoch']
@@ -206,7 +207,7 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
     fo.close()
 
     try:
-        PATH = fn+"_save_state_160"
+        PATH = checkpoint_savename
         torch.save(net.state_dict(), PATH)
     except Exception as e:
         print("save state failed:", e)
