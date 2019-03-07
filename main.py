@@ -67,7 +67,7 @@ classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship'
 # net = SENet18()
 # for modelname, net in zip(["ResNeXt29_2x64d"], [ResNeXt29_2x64d()]):
 # for modelname, net in zip(["ResNet18", "ResNeXt29_2x64d"], [ResNet18(), ResNeXt29_2x64d()]):
-for modelname, net in zip(["ResNet18"], [ResNet18()]):
+for modelname, net in zip(["ResNet20"], [ResNet20()]):
     logf = open("log_160_{}".format(modelname), "a+")
     # Training
     def train(epoch):
