@@ -157,7 +157,7 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
 
         return np.mean(batch_losses), np.mean(batch_errs), np.mean(batch_accs)
 
-    nepochs = 1
+    nepochs = 160
     train_err = []
     train_loss = []
     train_acc = []
