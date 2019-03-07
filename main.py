@@ -100,7 +100,8 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
             loss = train_loss / (batch_idx + 1)
             acc = 100. * correct / total
             logf.write('[%d]Loss: %.3f | Acc: %.3f%% (%d/%d)\n'% (batch_idx, loss, acc, correct, total))
-            print('[%d]Loss: %.3f | Acc: %.3f%% (%d/%d)'% (batch_idx, loss, acc, correct, total))
+            if batch_idx % 20 == 0:
+                print('[%d]Loss: %.3f | Acc: %.3f%% (%d/%d)'% (batch_idx, loss, acc, correct, total))
             batch_errs.append(1 - acc)
             batch_accs.append(acc)
             batch_losses.append(loss)
@@ -135,8 +136,9 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
                 acc = 100.*correct/total
                 logf.write('[%d] Val Loss: %.3f | Acc: %.3f%% (%d/%d)\n'
                     % (batch_idx, loss, acc, correct, total))
-                print('[%d] Val Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                    % (batch_idx, loss, acc, correct, total))
+                if batch_idx % 20 == 0:
+                    print('[%d] Val Loss: %.3f | Acc: %.3f%% (%d/%d)'
+                        % (batch_idx, loss, acc, correct, total))
                 batch_errs.append(1-acc)
                 batch_accs.append(acc)
                 batch_losses.append(loss)
@@ -184,7 +186,7 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=default_wd)
 
-    update_lr = {0.5*nepochs: default_lr*0.1, 0.75*nepochs: default_lr*0.01}
+    update_lr = {int(0.5*nepochs): default_lr*0.1, int(0.75*nepochs): default_lr*0.01}
 
     for epoch in range(start_epoch, start_epoch+nepochs):
         l, e, a = train(epoch)
