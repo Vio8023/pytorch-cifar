@@ -13,6 +13,7 @@ class BasicBlock(nn.Module):
         self.bn2 = nn.BatchNorm2d(planes)
 
         self.shortcut = nn.Sequential()
+
         if stride != 1 or in_planes != self.expansion * planes:
             self.shortcut = nn.Sequential(
                 nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride),
@@ -20,12 +21,10 @@ class BasicBlock(nn.Module):
             )
 
     def forward(self, x):
-        out = F.relu(self.bn1(self.conv1(x)))
-        out = self.bn2(self.conv2(out))
-        out += self.shortcut(x)
-        out = F.relu(out)
+        out = F.relu(
+            self.bn2(self.conv2(F.relu(self.bn1(self.conv1(x))))) + self.shortcut(x)
+        )
         return out
-
 
 class ResNet(nn.Module):
     def __init__(self, block, num_blocks, num_classes=10):
@@ -35,15 +34,15 @@ class ResNet(nn.Module):
         self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1)
         self.bn1 = nn.BatchNorm2d(16)
 
-        self.layer1 = self._make_layer(block, 16, num_blocks[0], stride=1)
-        self.layer2 = self._make_layer(block, 32, num_blocks[1], stride=2)
-        self.layer3 = self._make_layer(block, 64, num_blocks[2], stride=2)
+        self.layer1 = self._init_sub_block(block, 16, num_blocks[0], stride=1)
+        self.layer2 = self._init_sub_block(block, 32, num_blocks[1], stride=2)
+        self.layer3 = self._init_sub_block(block, 64, num_blocks[2], stride=2)
         self.layers = [self.layer1, self.layer2, self.layer3]
 
         self.linear = nn.Linear(64, num_classes)
 
-    def _make_layer(self, block, planes, num_blocks, stride):
-        strides = [stride] + [1] * (num_blocks - 1)
+    def _init_sub_block(self, block, planes, num_block, stride):
+        strides = [stride] + [1] * (num_block - 1)
         layers = []
 
         for stride in strides:
@@ -60,7 +59,6 @@ class ResNet(nn.Module):
         out = out.view(out.size(0), -1)
         out = self.linear(out)
         return out
-
 
 def ResNet20():
     return ResNet(BasicBlock, [3, 3, 3])

@@ -15,10 +15,14 @@ import torchvision.transforms as transforms
 import os
 import argparse
 import pickle
+import numpy as np
+import logging
+from resnet import *
+from resnext import *
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
-parser.add_argument('--weight_decay', '--wd', default=1e-4, help='weight decay coefficient')
+parser.add_argument('--wd', default=1e-4, help='weight decay coefficient')
 parser.add_argument('--resume', '-r', action='store_true', help='resume from checkpoint')
 parser.add_argument('--train_batch_size', default=128)
 parser.add_argument('--test_batch_size', default=128)
@@ -66,14 +70,13 @@ classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship'
 # net = SENet18()
 nepochs = 160
 checkpoint_savename = './checkpoint/ckpt_resnet_paper_{}.t7'.format(nepochs)
+
 for modelname, net in zip(["ResNet20"], [ResNet20()]):
     logf = open("log_160_{}".format(modelname), "a+")
-
-
     # Training
     def train(epoch):
         logf.write('\nEpoch: %d' % epoch)
-        print('\nEpoch: %d' % epoch)
+        print('Epoch: %d' % epoch)
         net.train()
         train_loss = 0
         correct = 0
@@ -103,23 +106,14 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
             batch_errs.append(1 - acc)
             batch_accs.append(acc)
             batch_losses.append(loss)
-            # progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-            #     % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
         return np.mean(batch_losses), np.mean(batch_errs), np.mean(batch_accs)
-
-
-    import numpy as np
-
 
     def test(epoch):
         global best_acc
         net.eval()
-        test_loss = 0
-        correct = 0
-        total = 0
-        batch_errs = []
-        batch_accs = []
-        batch_losses = []
+        test_loss, correct, total = 0, 0, 0
+        batch_errs, batch_accs, batch_losses = [], [], []
+
         with torch.no_grad():
             for batch_idx, (inputs, targets) in enumerate(testloader):
 
@@ -142,8 +136,6 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
                 batch_errs.append(1 - acc)
                 batch_accs.append(acc)
                 batch_losses.append(loss)
-                # progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                #     % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
 
         # Save checkpoint.
         acc = 100. * correct / total
@@ -169,7 +161,6 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
     val_loss = []
     val_acc = []
     print('==> Building model..')
-    # net = ShuffleNetV2(1)
     net = net.to(device)
     if device == 'cuda':
         net = torch.nn.DataParallel(net)
@@ -185,9 +176,9 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
         start_epoch = checkpoint['epoch']
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=default_wd)
+    optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd)
 
-    update_lr = {int(0.5 * nepochs): default_lr * 0.1, int(0.75 * nepochs): default_lr * 0.01}
+    update_lr = {int(0.5 * nepochs): args.lr * 0.1, int(0.75 * nepochs): args.lr * 0.01}
 
     for epoch in range(start_epoch, start_epoch + nepochs):
         l, e, a = train(epoch)
@@ -200,17 +191,13 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
         val_acc.append(ta)
         if epoch in update_lr:
             print("update learning rate to {}".format(update_lr[epoch]))
-            optimizer = optim.SGD(net.parameters(), lr=update_lr[epoch], momentum=0.9, weight_decay=default_wd)
+            optimizer = optim.SGD(net.parameters(), lr=update_lr[epoch], momentum=0.9, weight_decay=args.wd)
 
     result = {"train_err": train_err, "train_loss": train_loss, "train_acc": train_acc, \
               "val_loss": val_loss, "val_err": val_err, "val_acc": val_acc}
     fn = "/output/{}_start_epoch_{}_epochs_{}".format(modelname, start_epoch, nepochs)
-    fo = open(fn, "wb")
-    pickle.dump(result, fo)
-    fo.close()
 
-    try:
-        PATH = checkpoint_savename
-        torch.save(net.state_dict(), PATH)
-    except Exception as e:
-        print("save state failed:", e)
+    with open(fn, 'wb') as fout:
+        pickle.dump(result, fout)
+
+    torch.save(net.state_dict(), checkpoint_savename)
