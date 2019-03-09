@@ -49,6 +49,7 @@ class ResNeXt(nn.Module):
         self.layer1 = self._make_layer(num_blocks[0], 1)
         self.layer2 = self._make_layer(num_blocks[1], 2)
         self.layer3 = self._make_layer(num_blocks[2], 2)
+
         # self.layer4 = self._make_layer(num_blocks[3], 2)
         self.linear = nn.Linear(cardinality*bottleneck_width*8, num_classes)
 

@@ -1,9 +1,9 @@
-'''Train CIFAR10 with PyTorch.'''
-from __future__ import print_function
+'''
+Image Classification on CIFAR-10
+'''
 
 import sys
-sys.path.insert(0, "./")
-sys.path.insert(0, "./models")
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -17,39 +17,38 @@ import os
 import argparse
 import pickle
 
-from models import *
-# from utils import progress_bar
-
-default_lr = 0.1
-default_wd = 1e-4
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
-parser.add_argument('--lr', default=default_lr, type=float, help='learning rate')
+parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
+parser.add_argument('--weight_decay', '--wd', default=1e-4, help='weight decay coefficient')
 parser.add_argument('--resume', '-r', action='store_true', help='resume from checkpoint')
+parser.add_argument('--train_batch_size', default=128)
+parser.add_argument('--test_batch_size', default=128)
+
 args = parser.parse_args()
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-best_acc = 0  # best test accuracy
-start_epoch = 0  # start from epoch 0 or last checkpoint epoch
+best_acc, start_epoch = 0, 0
 
-# Data
-print('==> Preparing data..')
 transform_train = transforms.Compose([
     transforms.RandomCrop(32, padding=4),
     transforms.RandomHorizontalFlip(),
     transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    # correct the normalization by https://github.com/kuangliu/pytorch-cifar/issues/19
+    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
 ])
 
 transform_test = transforms.Compose([
     transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
 ])
 
 trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True, num_workers=2)
+trainloader = torch.utils.data.DataLoader(
+    trainset, batch_size=args.train_batch_size, shuffle=True, num_workers=2)
 
 testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
-testloader = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False, num_workers=2)
+testloader = torch.utils.data.DataLoader(
+    testset, batch_size=args.test_batch_size, shuffle=False, num_workers=2)
 
 classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
@@ -66,8 +65,6 @@ classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship'
 # net = DPN92()
 # net = ShuffleNetG2()
 # net = SENet18()
-# for modelname, net in zip(["ResNeXt29_2x64d"], [ResNeXt29_2x64d()]):
-# for modelname, net in zip(["ResNet18", "ResNeXt29_2x64d"], [ResNet18(), ResNeXt29_2x64d()]):
 nepochs = 160
 checkpoint_savename = './checkpoint/ckpt_resnet_paper_{}.t7'.format(nepochs)
 for modelname, net in zip(["ResNet20"], [ResNet20()]):
