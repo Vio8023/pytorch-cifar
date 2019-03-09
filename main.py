@@ -7,7 +7,6 @@ import sys
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
 
 import torchvision
@@ -69,6 +68,8 @@ nepochs = 160
 checkpoint_savename = './checkpoint/ckpt_resnet_paper_{}.t7'.format(nepochs)
 for modelname, net in zip(["ResNet20"], [ResNet20()]):
     logf = open("log_160_{}".format(modelname), "a+")
+
+
     # Training
     def train(epoch):
         logf.write('\nEpoch: %d' % epoch)
@@ -96,9 +97,9 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
 
             loss = train_loss / (batch_idx + 1)
             acc = 100. * correct / total
-            logf.write('[%d]Loss: %.3f | Acc: %.3f%% (%d/%d)\n'% (batch_idx, loss, acc, correct, total))
+            logf.write('[%d]Loss: %.3f | Acc: %.3f%% (%d/%d)\n' % (batch_idx, loss, acc, correct, total))
             if batch_idx % 20 == 0:
-                print('[%d]Loss: %.3f | Acc: %.3f%% (%d/%d)'% (batch_idx, loss, acc, correct, total))
+                print('[%d]Loss: %.3f | Acc: %.3f%% (%d/%d)' % (batch_idx, loss, acc, correct, total))
             batch_errs.append(1 - acc)
             batch_accs.append(acc)
             batch_losses.append(loss)
@@ -106,7 +107,10 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
             #     % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
         return np.mean(batch_losses), np.mean(batch_errs), np.mean(batch_accs)
 
+
     import numpy as np
+
+
     def test(epoch):
         global best_acc
         net.eval()
@@ -128,22 +132,21 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
                 total += targets.size(0)
                 correct += predicted.eq(targets).sum().item()
 
-
-                loss = test_loss/(batch_idx+1)
-                acc = 100.*correct/total
+                loss = test_loss / (batch_idx + 1)
+                acc = 100. * correct / total
                 logf.write('[%d] Val Loss: %.3f | Acc: %.3f%% (%d/%d)\n'
-                    % (batch_idx, loss, acc, correct, total))
+                           % (batch_idx, loss, acc, correct, total))
                 if batch_idx % 20 == 0:
                     print('[%d] Val Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                        % (batch_idx, loss, acc, correct, total))
-                batch_errs.append(1-acc)
+                          % (batch_idx, loss, acc, correct, total))
+                batch_errs.append(1 - acc)
                 batch_accs.append(acc)
                 batch_losses.append(loss)
                 # progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
                 #     % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
 
         # Save checkpoint.
-        acc = 100.*correct/total
+        acc = 100. * correct / total
         if acc > best_acc:
             print('Saving..')
             state = {
@@ -153,10 +156,11 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
             }
             if not os.path.isdir('checkpoint'):
                 os.mkdir('checkpoint')
-            torch.save(state, checkpoint_savename+str(epoch))
+            torch.save(state, checkpoint_savename + str(epoch))
             best_acc = acc
 
         return np.mean(batch_losses), np.mean(batch_errs), np.mean(batch_accs)
+
 
     train_err = []
     train_loss = []
@@ -183,9 +187,9 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=default_wd)
 
-    update_lr = {int(0.5*nepochs): default_lr*0.1, int(0.75*nepochs): default_lr*0.01}
+    update_lr = {int(0.5 * nepochs): default_lr * 0.1, int(0.75 * nepochs): default_lr * 0.01}
 
-    for epoch in range(start_epoch, start_epoch+nepochs):
+    for epoch in range(start_epoch, start_epoch + nepochs):
         l, e, a = train(epoch)
         train_loss.append(l)
         train_err.append(e)
@@ -198,7 +202,7 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
             print("update learning rate to {}".format(update_lr[epoch]))
             optimizer = optim.SGD(net.parameters(), lr=update_lr[epoch], momentum=0.9, weight_decay=default_wd)
 
-    result = {"train_err": train_err, "train_loss": train_loss, "train_acc": train_acc,\
+    result = {"train_err": train_err, "train_loss": train_loss, "train_acc": train_acc, \
               "val_loss": val_loss, "val_err": val_err, "val_acc": val_acc}
     fn = "/output/{}_start_epoch_{}_epochs_{}".format(modelname, start_epoch, nepochs)
     fo = open(fn, "wb")
@@ -210,4 +214,3 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
         torch.save(net.state_dict(), PATH)
     except Exception as e:
         print("save state failed:", e)
-
