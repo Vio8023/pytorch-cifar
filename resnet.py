@@ -1,10 +1,8 @@
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 
 class BasicBlock(nn.Module):
-
     expansion = 1
 
     def __init__(self, in_planes, planes, stride=1):
@@ -15,10 +13,10 @@ class BasicBlock(nn.Module):
         self.bn2 = nn.BatchNorm2d(planes)
 
         self.shortcut = nn.Sequential()
-        if stride != 1 or in_planes != self.expansion*planes:
+        if stride != 1 or in_planes != self.expansion * planes:
             self.shortcut = nn.Sequential(
-                nn.Conv2d(in_planes, self.expansion*planes, kernel_size=1, stride=stride),
-                nn.BatchNorm2d(self.expansion*planes)
+                nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride),
+                nn.BatchNorm2d(self.expansion * planes)
             )
 
     def forward(self, x):
@@ -27,6 +25,7 @@ class BasicBlock(nn.Module):
         out += self.shortcut(x)
         out = F.relu(out)
         return out
+
 
 class ResNet(nn.Module):
     def __init__(self, block, num_blocks, num_classes=10):
@@ -44,7 +43,7 @@ class ResNet(nn.Module):
         self.linear = nn.Linear(64, num_classes)
 
     def _make_layer(self, block, planes, num_blocks, stride):
-        strides = [stride] + [1] * (num_blocks-1)
+        strides = [stride] + [1] * (num_blocks - 1)
         layers = []
 
         for stride in strides:
@@ -64,4 +63,4 @@ class ResNet(nn.Module):
 
 
 def ResNet20():
-    return ResNet(BasicBlock, [3,3,3])
+    return ResNet(BasicBlock, [3, 3, 3])
