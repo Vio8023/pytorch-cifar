@@ -22,7 +22,7 @@ from resnext import *
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
-parser.add_argument('--wd', default=1e-4, help='weight decay coefficient')
+parser.add_argument('--wd', default=1e-4, type=float, help='weight decay coefficient')
 parser.add_argument('--resume', '-r', action='store_true', help='resume from checkpoint')
 parser.add_argument('--train_batch_size', default=128)
 parser.add_argument('--test_batch_size', default=128)
