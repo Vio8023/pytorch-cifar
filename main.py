@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
+from torch.autograd import Variable
 
 import torchvision
 import torchvision.transforms as transforms
@@ -21,7 +22,7 @@ from resnet import *
 from resnext import *
 from cutout import cutout
 from collections import OrderedDict
-from mixup import mixup_data
+from mixup import mixup_data, mixup_criterion
 
 
 
@@ -112,14 +113,34 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
         batch_accs = []
         batch_losses = []
         for batch_idx, (inputs, targets) in enumerate(trainloader):
-            inputs, targets_a, targets_b, lam = mixup_data(inputs, targets,
-                                                           args.alpha, use_cuda)
-            inputs, targets = inputs.to(device), targets.to(device)
-            optimizer.zero_grad()
-            outputs = net(inputs)
-            loss = criterion(outputs, targets)
-            loss.backward()
-            optimizer.step()
+            if args.use_mix_up:
+
+                if use_cuda:
+                    inputs, targets = inputs.cuda(), targets.cuda()
+
+                inputs, targets_a, targets_b, lam = mixup_data(inputs, targets,
+                                                               args.mix_up_alpha, use_cuda)
+                inputs, targets_a, targets_b = map(Variable, (inputs,
+                                                              targets_a, targets_b))
+
+                outputs = net(inputs)
+                loss = mixup_criterion(criterion, outputs, targets_a, targets_b, lam)
+                train_loss += loss.data[0]
+                _, predicted = torch.max(outputs.data, 1)
+                total += targets.size(0)
+                correct += (lam * predicted.eq(targets_a.data).cpu().sum().float()
+                            + (1 - lam) * predicted.eq(targets_b.data).cpu().sum().float())
+
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+            else:
+                inputs, targets = inputs.to(device), targets.to(device)
+                optimizer.zero_grad()
+                outputs = net(inputs)
+                loss = criterion(outputs, targets)
+                loss.backward()
+                optimizer.step()
 
             train_loss += loss.item()
             _, predicted = outputs.max(1)
