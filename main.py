@@ -195,8 +195,10 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
 
     result = {"train_err": train_err, "train_loss": train_loss, "train_acc": train_acc, \
               "val_loss": val_loss, "val_err": val_err, "val_acc": val_acc}
-    fn = "/output/{}_start_epoch_{}_epochs_{}".format(modelname, start_epoch, nepochs)
 
+    fn = "./output/{}_start_epoch_{}_epochs_{}".format(modelname, start_epoch, nepochs)
+    if not os.path.exists('./output/'):
+        os.mkdir('./output/')
     with open(fn, 'wb') as fout:
         pickle.dump(result, fout)
 
