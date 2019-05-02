@@ -113,11 +113,9 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
         batch_accs = []
         batch_losses = []
         for batch_idx, (inputs, targets) in enumerate(trainloader):
+            inputs, targets = inputs.to(device), targets.to(device)
             if args.use_mix_up:
-
-                if use_cuda:
-                    inputs, targets = inputs.cuda(), targets.cuda()
-
+                optimizer.zero_grad()
                 inputs, targets_a, targets_b, lam = mixup_data(inputs, targets,
                                                                args.mix_up_alpha, use_cuda)
                 inputs, targets_a, targets_b = map(Variable, (inputs,
@@ -125,36 +123,36 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
 
                 outputs = net(inputs)
                 loss = mixup_criterion(criterion, outputs, targets_a, targets_b, lam)
+                loss.backward()
+                optimizer.step()
+
                 train_loss += loss.data[0]
                 _, predicted = torch.max(outputs.data, 1)
                 total += targets.size(0)
                 correct += (lam * predicted.eq(targets_a.data).cpu().sum().float()
                             + (1 - lam) * predicted.eq(targets_b.data).cpu().sum().float())
 
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
+
             else:
-                inputs, targets = inputs.to(device), targets.to(device)
                 optimizer.zero_grad()
                 outputs = net(inputs)
                 loss = criterion(outputs, targets)
                 loss.backward()
                 optimizer.step()
 
-            train_loss += loss.item()
-            _, predicted = outputs.max(1)
-            total += targets.size(0)
-            correct += predicted.eq(targets).sum().item()
+                train_loss += loss.item()
+                _, predicted = outputs.max(1)
+                total += targets.size(0)
+                correct += predicted.eq(targets).sum().item()
 
-            loss = train_loss / (batch_idx + 1)
+            lossrecord = train_loss / (batch_idx + 1)
             acc = 100. * correct / total
-            logf.write('[%d]Loss: %.3f | Acc: %.3f%% (%d/%d)\n' % (batch_idx, loss, acc, correct, total))
+            logf.write('[%d]Loss: %.3f | Acc: %.3f%% (%d/%d)\n' % (batch_idx, lossrecord, acc, correct, total))
             if batch_idx % 20 == 0:
-                print('[%d]Loss: %.3f | Acc: %.3f%% (%d/%d)' % (batch_idx, loss, acc, correct, total))
+                print('[%d]Loss: %.3f | Acc: %.3f%% (%d/%d)' % (batch_idx, lossrecord, acc, correct, total))
             batch_errs.append(1 - acc)
             batch_accs.append(acc)
-            batch_losses.append(loss)
+            batch_losses.append(lossrecord)
         return np.mean(batch_losses), np.mean(batch_errs), np.mean(batch_accs)
 
     def test(epoch):
