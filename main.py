@@ -19,6 +19,11 @@ import numpy as np
 import logging
 from resnet import *
 from resnext import *
+from cutout import cutout
+from collections import OrderedDict
+from mixup import mixup_data
+
+
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
@@ -26,19 +31,41 @@ parser.add_argument('--wd', default=1e-4, help='weight decay coefficient')
 parser.add_argument('--resume', '-r', action='store_true', help='resume from checkpoint')
 parser.add_argument('--train_batch_size', default=128)
 parser.add_argument('--test_batch_size', default=128)
+parser.add_argument('--use_cutout', action='store_true', default=False)
+parser.add_argument('--cutout_size', type=int, default=16)
+parser.add_argument('--cutout_prob', type=float, default=1)
+parser.add_argument('--cutout_inside', action='store_true', default=False)
+parser.add_argument('--use_mix_up',action="store_true", default=False)
+parser.add_argument('--mix_up_alpha', type=float, default=1)
 
 args = parser.parse_args()
 
+
+
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
+use_cuda = device is 'cuda'
 best_acc, start_epoch = 0, 0
 
-transform_train = transforms.Compose([
-    transforms.RandomCrop(32, padding=4),
-    transforms.RandomHorizontalFlip(),
-    transforms.ToTensor(),
-    # correct the normalization by https://github.com/kuangliu/pytorch-cifar/issues/19
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
-])
+if not args.use_cutout:
+    transform_train = transforms.Compose([
+        transforms.RandomCrop(32, padding=4),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        # correct the normalization by https://github.com/kuangliu/pytorch-cifar/issues/19
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
+    ])
+else:
+    transform_train = transforms.Compose([
+        transforms.RandomCrop(32, padding=4),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        cutout(args.cutout_size,
+               args.cutout_prob,
+               args.cutout_inside),
+        # correct the normalization by https://github.com/kuangliu/pytorch-cifar/issues/19
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
+    ])
+
 
 transform_test = transforms.Compose([
     transforms.ToTensor(),
@@ -85,7 +112,8 @@ for modelname, net in zip(["ResNet20"], [ResNet20()]):
         batch_accs = []
         batch_losses = []
         for batch_idx, (inputs, targets) in enumerate(trainloader):
-
+            inputs, targets_a, targets_b, lam = mixup_data(inputs, targets,
+                                                           args.alpha, use_cuda)
             inputs, targets = inputs.to(device), targets.to(device)
             optimizer.zero_grad()
             outputs = net(inputs)
