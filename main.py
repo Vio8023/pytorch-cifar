@@ -50,6 +50,11 @@ transform_train = transforms.Compose([
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
 ])
 
+transform_val = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
+])
+
 transform_test = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
@@ -90,10 +95,7 @@ def train(epoch):
     logf.write('\nEpoch: %d' % epoch)
     print('Epoch: %d' % epoch)
     net.train()
-    train_loss = 0
-    correct = 0
-    total = 0
-    batch_errs = []
+    train_loss, correct, total = 0, 0, 0
     batch_accs = []
     batch_losses = []
     for batch_idx, (inputs, targets) in enumerate(trainloader):
@@ -115,10 +117,11 @@ def train(epoch):
         logf.write('[%d]Loss: %.3f | Acc: %.3f%% (%d/%d)\n' % (batch_idx, loss, acc, correct, total))
         if batch_idx % 200 == 0:
             print('[%d]Loss: %.3f | Acc: %.3f%% (%d/%d)' % (batch_idx, loss, acc, correct, total))
-        batch_errs.append(1 - acc)
         batch_accs.append(acc)
         batch_losses.append(loss)
-    return np.mean(batch_losses), np.mean(batch_errs), np.mean(batch_accs)
+    acc = float(correct) / total
+    print('Train Acc:{}'.format(acc))
+    return np.mean(batch_losses), acc
 
 def test(epoch):
     global best_acc
@@ -145,23 +148,9 @@ def test(epoch):
         batch_accs.append(acc)
         batch_losses.append(loss)
 
-    acc = correct / total
+    acc = float(correct) / total
     print('Val Acc:{} ({}/{})'.format(acc, correct, total))
-    # Save checkpoint.
-    acc = 100. * correct / total
-    if acc > best_acc:
-        print('Saving..')
-        state = {
-            'net': net.state_dict(),
-            'acc': acc,
-            'epoch': epoch,
-        }
-        if not os.path.isdir('checkpoint'):
-            os.mkdir('checkpoint')
-        torch.save(state, checkpoint_savename)
-        best_acc = acc
-
-    return np.mean(batch_losses), np.mean(batch_errs), np.mean(batch_accs)
+    return np.mean(batch_losses), acc
 
 
 train_err, train_loss, train_acc = [], [], []
@@ -183,27 +172,36 @@ if args.test:
     net.load_state_dict(checkpoint['net'])
     best_acc = checkpoint['acc']
     trained_epoch = checkpoint['epoch']
-    tl, te, ta = test(trained_epoch)
-    print('trained_epoch:{} saved_acc:{} test loss:{} test_error:{} test_acc:{}'.format(
-        trained_epoch, best_acc, tl, te, ta))
+    tl, ta = test(trained_epoch)
+    print('trained_epoch:{} saved_acc:{} test loss:{} test_acc:{}'.format(
+        trained_epoch, best_acc, tl, ta))
 
 elif args.train:
     optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=args.wd)
     update_lr = {int(0.5 * nepochs): args.lr * 0.1, int(0.75 * nepochs): args.lr * 0.01}
     for epoch in range(0, nepochs):
-        l, e, a = train(epoch)
+        l, a = train(epoch)
         train_loss.append(l)
-        train_err.append(e)
         train_acc.append(a)
-        tl, te, ta = test(epoch)
+        tl, ta = test(epoch)
         val_loss.append(tl)
-        val_err.append(te)
         val_acc.append(ta)
         if epoch in update_lr:
             print("update learning rate to {}".format(update_lr[epoch]))
             optimizer = optim.SGD(net.parameters(), lr=update_lr[epoch], momentum=0.9, weight_decay=args.wd)
-    result = {"train_err": train_err, "train_loss": train_loss, "train_acc": train_acc, \
-              "val_loss": val_loss, "val_err": val_err, "val_acc": val_acc}
+    acc = ta
+    state = {
+        'net': net.state_dict(),
+        'acc': acc,
+        'epoch': epoch,
+    }
+    if not os.path.isdir('checkpoint'):
+        os.mkdir('checkpoint')
+    torch.save(state, checkpoint_savename)
+    best_acc = acc
+
+    result = {"train_loss": train_loss, "train_acc": train_acc, \
+              "val_loss": val_loss, "val_acc": val_acc}
 
     fn = "./output/{}_start_epoch_{}_epochs_{}.pk".format(modelname, start_epoch, nepochs)
     if not os.path.exists('./output/'):
