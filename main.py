@@ -21,6 +21,7 @@ import logging
 import random
 
 from resnet import *
+from shakeshake_resnet import *
 from resnext import *
 from cutout import cutout
 from collections import OrderedDict
