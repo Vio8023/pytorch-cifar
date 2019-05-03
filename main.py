@@ -149,7 +149,7 @@ def train(epoch):
         cur_loss = train_loss / (batch_idx + 1)
         acc = 100. * correct / total
         logf.write('[%d]Loss: %.3f | Acc: %.3f%% (%d/%d)\n' % (batch_idx, cur_loss, acc, correct, total))
-        if batch_idx % 20 == 0:
+        if batch_idx % 100 == 0:
             print('[%d]Loss: %.3f | Acc: %.3f%% (%d/%d)' % (batch_idx, cur_loss, acc, correct, total))
         batch_accs.append(acc)
         batch_losses.append(cur_loss)
