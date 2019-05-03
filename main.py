@@ -21,6 +21,7 @@ import logging
 import random
 
 from resnet import *
+from shakeshake_resnet import *
 from resnext import *
 from cutout import cutout
 from collections import OrderedDict
@@ -33,8 +34,8 @@ parser.add_argument('--model_arch', default="ResNet20", help='specify the model 
 parser.add_argument('--wd', default=1e-4, type=float, help='weight decay coefficient')
 parser.add_argument('--test', action='store_true', help='resume from checkpoint')
 parser.add_argument('--train', action='store_true', help='train the model')
-parser.add_argument('--train_batch_size', default=128)
-parser.add_argument('--test_batch_size', default=100)
+parser.add_argument('--train_batch_size', type=int, default=128)
+parser.add_argument('--test_batch_size', type=int, default=100)
 parser.add_argument('--nepochs', default=160)
 parser.add_argument('--seed', default=1234)
 
@@ -66,6 +67,9 @@ best_acc, start_epoch = 0, 0
 
 if args.noise_type is not None:
     noise_func = noise_data(noise_type=args.noise_type)
+means = np.array([0.4914, 0.4822, 0.4465])
+stds = np.array([0.2470, 0.2435, 0.2616])
+
 if not args.use_cutout:
     if not args.noise_train:
         transform_train = transforms.Compose([
@@ -73,7 +77,7 @@ if not args.use_cutout:
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             # correct the normalization by https://github.com/kuangliu/pytorch-cifar/issues/19
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
+            transforms.Normalize(means, stds),
         ])
     else:
         noise_func = noise_data(noise_type=args.noise_type)
@@ -81,7 +85,7 @@ if not args.use_cutout:
             transforms.RandomCrop(32, padding=4),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
+            transforms.Normalize(means, stds),
             noise_func,
         ])
 
@@ -94,7 +98,7 @@ else:
                    args.cutout_prob,
                    args.cutout_inside),
             transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
+            transforms.Normalize(means, stds),
         ])
     else:
         transform_train = transforms.Compose([
