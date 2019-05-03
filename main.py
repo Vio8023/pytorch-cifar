@@ -54,20 +54,21 @@ random.seed(args.seed)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 use_cuda = device is 'cuda'
 best_acc, start_epoch = 0, 0
-
+mean = np.array([0.4914, 0.4822, 0.4465])
+std = np.array([0.2470, 0.2435, 0.2616])
 if not args.use_cutout:
     transform_train = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         # correct the normalization by https://github.com/kuangliu/pytorch-cifar/issues/19
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
+        transforms.Normalize(mean, std),
     ])
 else:
     transform_train = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
+        transforms.Normalize(mean, std),
         cutout(args.cutout_size,
                args.cutout_prob,
                args.cutout_inside),
