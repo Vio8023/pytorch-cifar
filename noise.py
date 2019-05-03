@@ -1,6 +1,15 @@
-def gaussian_noise_data():
-    def _gm_noise(image):
-        image = np.asarray(image).copy()
+import numpy as np
+
+def noise_data(noise_type):
+    if noise_type == "gauss":
+        def _noise(image):
+            image = np.asarray(image).copy()
+            mean, sigma = 0, 0.1
+            gauss = np.random.normal(mean, sigma, image.shape)
+            noisy = image + gauss
+            return noisy
+    return _noise
+
 
 def mixup_data(x, y, alpha=1.0, use_cuda=True):
     '''Returns mixed inputs, pairs of targets, and lambda'''
