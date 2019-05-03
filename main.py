@@ -27,12 +27,12 @@ from collections import OrderedDict
 from mixup import mixup_data, mixup_criterion
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
-parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
+parser.add_argument('--lr', default=0.2, type=float, help='learning rate')
 parser.add_argument('--model_arch', default="ResNet20", help='specify the model class you want to use')
 parser.add_argument('--wd', default=1e-4, type=float, help='weight decay coefficient')
 parser.add_argument('--test', action='store_true', help='resume from checkpoint')
 parser.add_argument('--train', action='store_true', help='train the model')
-parser.add_argument('--train_batch_size', default=64)
+parser.add_argument('--train_batch_size', default=128)
 parser.add_argument('--test_batch_size', default=100)
 parser.add_argument('--nepochs', default=160)
 parser.add_argument('--seed', default=1234)
