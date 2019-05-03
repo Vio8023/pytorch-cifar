@@ -36,7 +36,6 @@ parser.add_argument('--train', action='store_true', help='train the model')
 parser.add_argument('--train_batch_size', default=128)
 parser.add_argument('--test_batch_size', default=100)
 parser.add_argument('--nepochs', default=160)
->>>>>>> d389cb742df718200fbf4b757f63f7b1bfcfbdab
 parser.add_argument('--seed', default=1234)
 parser.add_argument('--use_cutout', action='store_true', default=False)
 parser.add_argument('--cutout_size', type=int, default=16)
