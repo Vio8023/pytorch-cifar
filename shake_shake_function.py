@@ -16,9 +16,9 @@ class ShakeFunction(Function):
         grad_x1 = grad_x2 = grad_alpha = grad_beta = None
 
         if ctx.needs_input_grad[0]:
-            grad_x1 = grad_output * beta
+            grad_x1 = grad_output * alpha
         if ctx.needs_input_grad[1]:
-            grad_x2 = grad_output * (1 - beta)
+            grad_x2 = grad_output * (1 - alpha)
 
         return grad_x1, grad_x2, grad_alpha, grad_beta
 
