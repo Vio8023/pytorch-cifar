@@ -1,12 +1,15 @@
 import numpy as np
 import torch
 
-def mixup_data(x, y, alpha=1.0, use_cuda=True):
+def mixup_data(x, y, alpha=1.0, use_uniform=False, use_cuda=True):
     '''Returns mixed inputs, pairs of targets, and lambda'''
-    if alpha > 0:
-        lam = np.random.beta(alpha, alpha)
+    if use_uniform:
+        lam = np.random.uniform(0, 1)
     else:
-        lam = 1
+        if alpha > 0:
+            lam = np.random.beta(alpha, alpha)
+        else:
+            lam = 1
 
     batch_size = x.size()[0]
     if use_cuda:

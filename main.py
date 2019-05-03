@@ -46,7 +46,8 @@ parser.add_argument('--cutout_prob', type=float, default=1)
 parser.add_argument('--cutout_inside', action='store_true', default=False)
 ################## These parameters are used in Mix Up Model ####################
 parser.add_argument('--use_mix_up',action="store_true", default=False)
-parser.add_argument('--mix_up_alpha', type=float, default=1)
+parser.add_argument('--use_uniform_mixup',action="store_true", default=False)
+parser.add_argument('--mix_up_alpha', type=float, default=0.2)
 parser.add_argument('--prefix', type=str, default="exp")
 
 ################## These parameters are used in Noisy input ####################
@@ -159,7 +160,7 @@ def train(epoch):
         if args.use_mix_up:
             optimizer.zero_grad()
             inputs, targets_a, targets_b, lam = mixup_data(inputs, targets,
-                                                           args.mix_up_alpha, use_cuda)
+                                                           args.mix_up_alpha, args.use_uniform_mixup, use_cuda)
             inputs, targets_a, targets_b = map(Variable, (inputs,
                                                           targets_a, targets_b))
 
