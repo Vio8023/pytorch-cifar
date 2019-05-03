@@ -69,6 +69,7 @@ else:
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
         transforms.Normalize(mean, std),
+        transforms.ToTensor(),
         cutout(args.cutout_size,
                args.cutout_prob,
                args.cutout_inside),
