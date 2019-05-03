@@ -21,6 +21,7 @@ import logging
 import random
 
 from resnet import *
+from shakeshake_resnet import *
 from resnext import *
 from cutout import cutout
 from collections import OrderedDict
@@ -32,10 +33,9 @@ parser.add_argument('--model_arch', default="ResNet20", help='specify the model 
 parser.add_argument('--wd', default=1e-4, type=float, help='weight decay coefficient')
 parser.add_argument('--test', action='store_true', help='resume from checkpoint')
 parser.add_argument('--train', action='store_true', help='train the model')
-parser.add_argument('--train_batch_size', default=128)
-parser.add_argument('--test_batch_size', default=100)
+parser.add_argument('--train_batch_size', type=int, default=128)
+parser.add_argument('--test_batch_size', type=int, default=100)
 parser.add_argument('--nepochs', default=160)
->>>>>>> d389cb742df718200fbf4b757f63f7b1bfcfbdab
 parser.add_argument('--seed', default=1234)
 parser.add_argument('--use_cutout', action='store_true', default=False)
 parser.add_argument('--cutout_size', type=int, default=16)
@@ -54,25 +54,26 @@ random.seed(args.seed)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 use_cuda = device is 'cuda'
 best_acc, start_epoch = 0, 0
-
+mean = np.array([0.4914, 0.4822, 0.4465])
+std = np.array([0.2470, 0.2435, 0.2616])
 if not args.use_cutout:
     transform_train = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         # correct the normalization by https://github.com/kuangliu/pytorch-cifar/issues/19
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
+        transforms.Normalize(mean, std),
     ])
 else:
     transform_train = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
+        # correct the normalization by https://github.com/kuangliu/pytorch-cifar/issues/19
+        transforms.ToTensor(),
+        transforms.Normalize(mean, std),
         cutout(args.cutout_size,
                args.cutout_prob,
                args.cutout_inside),
-        transforms.ToTensor(),
-        # correct the normalization by https://github.com/kuangliu/pytorch-cifar/issues/19
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
     ])
 
 
