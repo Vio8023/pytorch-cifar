@@ -15,11 +15,11 @@ class ResidualPath(nn.Module):
     def forward(self, x):
         return self.bn2(self.conv2(F.relu(self.bn1(self.conv1(x)))))
 
-class BasicBlock(nn.Module):
+class SSBasicBlock(nn.Module):
     expansion = 1
 
     def __init__(self, in_planes, planes, stride=1):
-        super(BasicBlock, self).__init__()
+        super(SSBasicBlock, self).__init__()
         self.residual_path1 = ResidualPath(in_planes, planes, stride)
         self.residual_path2 = ResidualPath(in_planes, planes, stride)
 
@@ -82,4 +82,4 @@ class SSResNet(nn.Module):
         return out
 
 def SSResNet20():
-    return SSResNet(BasicBlock, [3, 3, 3])
+    return SSResNet(SSBasicBlock, [3, 3, 3])
