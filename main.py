@@ -26,17 +26,16 @@ from cutout import cutout
 from collections import OrderedDict
 from mixup import mixup_data, mixup_criterion
 
-
-
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
-parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
+parser.add_argument('--lr', default=0.2, type=float, help='learning rate')
 parser.add_argument('--model_arch', default="ResNet20", help='specify the model class you want to use')
 parser.add_argument('--wd', default=1e-4, type=float, help='weight decay coefficient')
 parser.add_argument('--test', action='store_true', help='resume from checkpoint')
 parser.add_argument('--train', action='store_true', help='train the model')
 parser.add_argument('--train_batch_size', default=128)
-parser.add_argument('--test_batch_size', default=128)
-parser.add_argument('--nepochs', default=2)
+parser.add_argument('--test_batch_size', default=100)
+parser.add_argument('--nepochs', default=160)
+>>>>>>> d389cb742df718200fbf4b757f63f7b1bfcfbdab
 parser.add_argument('--seed', default=1234)
 parser.add_argument('--use_cutout', action='store_true', default=False)
 parser.add_argument('--cutout_size', type=int, default=16)
@@ -44,6 +43,7 @@ parser.add_argument('--cutout_prob', type=float, default=1)
 parser.add_argument('--cutout_inside', action='store_true', default=False)
 parser.add_argument('--use_mix_up',action="store_true", default=False)
 parser.add_argument('--mix_up_alpha', type=float, default=1)
+parser.add_argument('--prefix', type=str, default="exp")
 
 args = parser.parse_args()
 
@@ -67,10 +67,10 @@ else:
     transform_train = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
         cutout(args.cutout_size,
                args.cutout_prob,
                args.cutout_inside),
+        transforms.ToTensor(),
         # correct the normalization by https://github.com/kuangliu/pytorch-cifar/issues/19
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
     ])
@@ -92,18 +92,6 @@ testloader = torch.utils.data.DataLoader(
 classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
 # Model
-
-# net = VGG('VGG19')
-# net = ResNet18()
-# net = PreActResNet18()
-# net = GoogLeNet()
-# net = DenseNet121()
-# net = ResNeXt29_2x64d()
-# net = MobileNet()
-# net = MobileNetV2()
-# net = DPN92()
-# net = ShuffleNetG2()
-# net = SENet18()
 nepochs = args.nepochs
 modelname = args.model_arch
 checkpoint_savename = './checkpoint/{}.ckpt'.format(modelname)
@@ -130,7 +118,7 @@ def train(epoch):
 
             outputs = net(inputs)
             loss = mixup_criterion(criterion, outputs, targets_a, targets_b, lam)
-            train_loss += loss.data[0]
+            train_loss += loss.item()
             _, predicted = torch.max(outputs.data, 1)
             total += targets.size(0)
             correct += (lam * predicted.eq(targets_a.data).cpu().sum().float()
@@ -147,18 +135,18 @@ def train(epoch):
             loss.backward()
             optimizer.step()
 
-        train_loss += loss.item()
-        _, predicted = outputs.max(1)
-        total += targets.size(0)
-        correct += predicted.eq(targets).sum().item()
+            train_loss += loss.item()
+            _, predicted = outputs.max(1)
+            total += targets.size(0)
+            correct += predicted.eq(targets).sum().item()
 
-        loss = train_loss / (batch_idx + 1)
+        cur_loss = train_loss / (batch_idx + 1)
         acc = 100. * correct / total
-        logf.write('[%d]Loss: %.3f | Acc: %.3f%% (%d/%d)\n' % (batch_idx, loss, acc, correct, total))
-        if batch_idx % 20 == 0:
-            print('[%d]Loss: %.3f | Acc: %.3f%% (%d/%d)' % (batch_idx, loss, acc, correct, total))
+        logf.write('[%d]Loss: %.3f | Acc: %.3f%% (%d/%d)\n' % (batch_idx, cur_loss, acc, correct, total))
+        if batch_idx % 100 == 0:
+            print('[%d]Loss: %.3f | Acc: %.3f%% (%d/%d)' % (batch_idx, cur_loss, acc, correct, total))
         batch_accs.append(acc)
-        batch_losses.append(loss)
+        batch_losses.append(cur_loss)
     acc = float(correct) / total
     print('Train Acc:{}'.format(acc))
     return np.mean(batch_losses), acc
@@ -246,7 +234,7 @@ elif args.train:
     result = {"train_loss": train_loss, "train_acc": train_acc, \
               "val_loss": val_loss, "val_acc": val_acc}
 
-    fn = "./output/{}_start_epoch_{}_epochs_{}.pk".format(modelname, start_epoch, nepochs)
+    fn = "./output/{}_{}_start_epoch_{}_epochs_{}.pk".format(args.prefix, modelname, start_epoch, nepochs)
     if not os.path.exists('./output/'):
         os.mkdir('./output/')
     with open(fn, 'wb') as fout:
