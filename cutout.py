@@ -41,7 +41,7 @@ def cutout(mask_size, p, cutout_inside, mask_color=(0, 0, 0)):
         if np.random.random() > p:
             return image
 
-        h, w = image.shape[:2]
+        h, w = image.shape[1:3]
 
         if cutout_inside:
             cxmin, cxmax = mask_size_half, w + offset - mask_size_half
