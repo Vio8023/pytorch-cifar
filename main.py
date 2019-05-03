@@ -68,12 +68,12 @@ else:
     transform_train = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
-        transforms.Normalize(mean, std),
+        # correct the normalization by https://github.com/kuangliu/pytorch-cifar/issues/19
         transforms.ToTensor(),
+        transforms.Normalize(mean, std),
         cutout(args.cutout_size,
                args.cutout_prob,
                args.cutout_inside),
-        transforms.ToTensor(),
     ])
 
 
