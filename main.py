@@ -42,6 +42,7 @@ parser.add_argument('--cutout_prob', type=float, default=1)
 parser.add_argument('--cutout_inside', action='store_true', default=False)
 parser.add_argument('--use_mix_up',action="store_true", default=False)
 parser.add_argument('--mix_up_alpha', type=float, default=1)
+parser.add_argument('--prefix', type=str, default="exp")
 
 args = parser.parse_args()
 
@@ -251,7 +252,7 @@ elif args.train:
     result = {"train_loss": train_loss, "train_acc": train_acc, \
               "val_loss": val_loss, "val_acc": val_acc}
 
-    fn = "./output/{}_start_epoch_{}_epochs_{}.pk".format(modelname, start_epoch, nepochs)
+    fn = "./output/{}_{}_start_epoch_{}_epochs_{}.pk".format(args.prefix, modelname, start_epoch, nepochs)
     if not os.path.exists('./output/'):
         os.mkdir('./output/')
     with open(fn, 'wb') as fout:
