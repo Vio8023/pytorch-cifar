@@ -36,6 +36,7 @@ parser.add_argument('--train', action='store_true', help='train the model')
 parser.add_argument('--train_batch_size', default=128)
 parser.add_argument('--test_batch_size', default=100)
 parser.add_argument('--nepochs', default=160)
+>>>>>>> d389cb742df718200fbf4b757f63f7b1bfcfbdab
 parser.add_argument('--seed', default=1234)
 parser.add_argument('--use_cutout', action='store_true', default=False)
 parser.add_argument('--cutout_size', type=int, default=16)
@@ -50,8 +51,6 @@ args = parser.parse_args()
 torch.manual_seed(args.seed)
 np.random.seed(args.seed)
 random.seed(args.seed)
-
-args = parser.parse_args()
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 use_cuda = device is 'cuda'
@@ -77,11 +76,6 @@ else:
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
     ])
 
-
-transform_val = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
-])
 
 transform_test = transforms.Compose([
     transforms.ToTensor(),
