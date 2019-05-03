@@ -34,8 +34,8 @@ parser.add_argument('--model_arch', default="ResNet20", help='specify the model 
 parser.add_argument('--wd', default=1e-4, type=float, help='weight decay coefficient')
 parser.add_argument('--test', action='store_true', help='resume from checkpoint')
 parser.add_argument('--train', action='store_true', help='train the model')
-parser.add_argument('--train_batch_size', default=128)
-parser.add_argument('--test_batch_size', default=128)
+parser.add_argument('--train_batch_size', default=64)
+parser.add_argument('--test_batch_size', default=100)
 parser.add_argument('--nepochs', default=160)
 parser.add_argument('--seed', default=1234)
 parser.add_argument('--use_cutout', action='store_true', default=False)
@@ -99,18 +99,6 @@ testloader = torch.utils.data.DataLoader(
 classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
 # Model
-
-# net = VGG('VGG19')
-# net = ResNet18()
-# net = PreActResNet18()
-# net = GoogLeNet()
-# net = DenseNet121()
-# net = ResNeXt29_2x64d()
-# net = MobileNet()
-# net = MobileNetV2()
-# net = DPN92()
-# net = ShuffleNetG2()
-# net = SENet18()
 nepochs = args.nepochs
 modelname = args.model_arch
 checkpoint_savename = './checkpoint/{}.ckpt'.format(modelname)
