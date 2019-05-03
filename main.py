@@ -25,6 +25,7 @@ from resnext import *
 from cutout import cutout
 from collections import OrderedDict
 from mixup import mixup_data, mixup_criterion
+from noise import noise_data
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--lr', default=0.2, type=float, help='learning rate')
@@ -36,13 +37,22 @@ parser.add_argument('--train_batch_size', default=128)
 parser.add_argument('--test_batch_size', default=100)
 parser.add_argument('--nepochs', default=160)
 parser.add_argument('--seed', default=1234)
+
+################## These parameters are used in Cutout Model ####################
 parser.add_argument('--use_cutout', action='store_true', default=False)
 parser.add_argument('--cutout_size', type=int, default=16)
 parser.add_argument('--cutout_prob', type=float, default=1)
 parser.add_argument('--cutout_inside', action='store_true', default=False)
+################## These parameters are used in Mix Up Model ####################
 parser.add_argument('--use_mix_up',action="store_true", default=False)
 parser.add_argument('--mix_up_alpha', type=float, default=1)
 parser.add_argument('--prefix', type=str, default="exp")
+
+################## These parameters are used in Noisy input ####################
+parser.add_argument('--noise_type', type=str, default=None)
+parser.add_argument('--noise_train', action='store_true', default=False)
+parser.add_argument('--noise_test', action='store_true', default=False)
+
 
 args = parser.parse_args()
 
@@ -54,31 +64,63 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 use_cuda = device is 'cuda'
 best_acc, start_epoch = 0, 0
 
+if args.noise_type is not None:
+    noise_func = noise_data(noise_type=args.noise_type)
 if not args.use_cutout:
-    transform_train = transforms.Compose([
-        transforms.RandomCrop(32, padding=4),
-        transforms.RandomHorizontalFlip(),
+    if not args.noise_train:
+        transform_train = transforms.Compose([
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            # correct the normalization by https://github.com/kuangliu/pytorch-cifar/issues/19
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
+        ])
+    else:
+        noise_func = noise_data(noise_type=args.noise_type)
+        transform_train = transforms.Compose([
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
+            noise_func,
+        ])
+
+else:
+    if not args.noise_train:
+        transform_train = transforms.Compose([
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            cutout(args.cutout_size,
+                   args.cutout_prob,
+                   args.cutout_inside),
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
+        ])
+    else:
+        transform_train = transforms.Compose([
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            cutout(args.cutout_size,
+                   args.cutout_prob,
+                   args.cutout_inside),
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
+            noise_func,
+        ])
+
+
+if not args.noise_test:
+    transform_test = transforms.Compose([
         transforms.ToTensor(),
-        # correct the normalization by https://github.com/kuangliu/pytorch-cifar/issues/19
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
     ])
 else:
-    transform_train = transforms.Compose([
-        transforms.RandomCrop(32, padding=4),
-        transforms.RandomHorizontalFlip(),
-        cutout(args.cutout_size,
-               args.cutout_prob,
-               args.cutout_inside),
+    transform_test = transforms.Compose([
         transforms.ToTensor(),
-        # correct the normalization by https://github.com/kuangliu/pytorch-cifar/issues/19
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
+        noise_func,
     ])
 
-
-transform_test = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
-])
 
 trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
 
