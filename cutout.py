@@ -60,7 +60,7 @@ def cutout(mask_size, p, cutout_inside, mask_color=(0, 0, 0)):
         ymin = max(0, ymin)
         xmax = min(w, xmax)
         ymax = min(h, ymax)
-        image[ymin:ymax, xmin:xmax] = mask_color
+        image[:, ymin:ymax, xmin:xmax] = 0
         return image
 
     return _cutout
