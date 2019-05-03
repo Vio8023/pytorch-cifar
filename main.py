@@ -47,7 +47,7 @@ parser.add_argument('--cutout_inside', action='store_true', default=False)
 ################## These parameters are used in Mix Up Model ####################
 parser.add_argument('--use_mix_up',action="store_true", default=False)
 parser.add_argument('--use_uniform_mixup',action="store_true", default=False)
-parser.add_argument('--mix_up_alpha', type=float, default=1)
+parser.add_argument('--mix_up_alpha', type=float, default=0.2)
 parser.add_argument('--prefix', type=str, default="exp")
 
 ################## These parameters are used in Noisy input ####################

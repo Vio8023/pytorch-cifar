@@ -4,7 +4,6 @@ import torch
 def mixup_data(x, y, alpha=1.0, use_uniform=False, use_cuda=True):
     '''Returns mixed inputs, pairs of targets, and lambda'''
     if use_uniform:
-        print("Using uniform for mixup")
         lam = np.random.uniform(0, 1)
     else:
         if alpha > 0:
