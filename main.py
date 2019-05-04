@@ -52,7 +52,7 @@ parser.add_argument('--mix_up_alpha', type=float, default=0.2)
 parser.add_argument('--prefix', type=str, default="exp")
 
 ################## These parameters are used in Noisy input ####################
-parser.add_argument('--noise_type', type=str, default=None)
+parser.add_argument('--noise_type', type=str, default="gauss")
 parser.add_argument('--noise_train', action='store_true', default=False)
 parser.add_argument('--noise_test', action='store_true', default=False)
 
@@ -77,6 +77,9 @@ if args.noise_type is not None:
         noise_func_test = noise_data(noise_type=args.noise_type, noise_prob=1.0)
     else:
         noise_func_test = noise_data(noise_type=args.noise_type, noise_prob=0)
+else:
+    raise ValueError("unsupported noise type:{}".format(args.noise_type))
+
 means = np.array([0.4914, 0.4822, 0.4465])
 stds = np.array([0.2470, 0.2435, 0.2616])
 
