@@ -36,7 +36,7 @@ parser.add_argument('--test', action='store_true', help='resume from checkpoint'
 parser.add_argument('--train', action='store_true', help='train the model')
 parser.add_argument('--train_batch_size', type=int, default=128)
 parser.add_argument('--test_batch_size', type=int, default=100)
-parser.add_argument('--nepochs', default=160)
+parser.add_argument('--nepochs', type=int, default=160)
 parser.add_argument('--seed', default=1234)
 
 ################## These parameters are used in Cutout Model ####################
