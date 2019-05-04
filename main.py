@@ -54,7 +54,7 @@ parser.add_argument('--noise_type', type=str, default=None)
 parser.add_argument('--noise_train', action='store_true', default=False)
 parser.add_argument('--noise_test', action='store_true', default=False)
 
-
+################## Concate
 args = parser.parse_args()
 
 torch.manual_seed(args.seed)
@@ -66,64 +66,44 @@ use_cuda = device is 'cuda'
 best_acc, start_epoch = 0, 0
 
 if args.noise_type is not None:
-    noise_func = noise_data(noise_type=args.noise_type)
+    if not args.noise_train:
+        noise_func_train = noise_data(noise_type=args.noise_type, noise_prob=1.0)
+    else:
+        noise_func_train = noise_data(noise_type=args.noise_type, noise_prob=0.5)
+
+    if not args.noise_test:
+        noise_func_test = noise_data(noise_type=args.noise_type, noise_prob=1.0)
+    else:
+        noise_func_test = noise_data(noise_type=args.noise_type, noise_prob=0)
 means = np.array([0.4914, 0.4822, 0.4465])
 stds = np.array([0.2470, 0.2435, 0.2616])
 
 if not args.use_cutout:
-    if not args.noise_train:
-        transform_train = transforms.Compose([
-            transforms.RandomCrop(32, padding=4),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            # correct the normalization by https://github.com/kuangliu/pytorch-cifar/issues/19
-            transforms.Normalize(means, stds),
-        ])
-    else:
-        noise_func = noise_data(noise_type=args.noise_type)
-        transform_train = transforms.Compose([
-            transforms.RandomCrop(32, padding=4),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize(means, stds),
-            noise_func,
-        ])
-
-else:
-    if not args.noise_train:
-        transform_train = transforms.Compose([
-            transforms.RandomCrop(32, padding=4),
-            transforms.RandomHorizontalFlip(),
-            cutout(args.cutout_size,
-                   args.cutout_prob,
-                   args.cutout_inside),
-            transforms.ToTensor(),
-            transforms.Normalize(means, stds),
-        ])
-    else:
-        transform_train = transforms.Compose([
-            transforms.RandomCrop(32, padding=4),
-            transforms.RandomHorizontalFlip(),
-            cutout(args.cutout_size,
-                   args.cutout_prob,
-                   args.cutout_inside),
-            transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
-            noise_func,
-        ])
-
-
-if not args.noise_test:
-    transform_test = transforms.Compose([
+    transform_train = transforms.Compose([
+        transforms.RandomCrop(32, padding=4),
+        transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
+        transforms.Normalize(means, stds),
+        noise_func_train,
     ])
 else:
-    transform_test = transforms.Compose([
+    transform_train = transforms.Compose([
+        transforms.RandomCrop(32, padding=4),
+        transforms.RandomHorizontalFlip(),
+        cutout(args.cutout_size,
+               args.cutout_prob,
+               args.cutout_inside),
         transforms.ToTensor(),
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
-        noise_func,
+        noise_func_train,
     ])
+
+
+transform_test = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
+    noise_func_test,
+])
 
 
 trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
@@ -242,7 +222,7 @@ if device == 'cuda':
 
 if args.test:
     # Load checkpoint.
-    print('==> Resuming from checkpoint..')
+    print('==> Resuming from checkpoint {}..'.format(checkpoint_savename))
     assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
     checkpoint = torch.load(checkpoint_savename)
     net.load_state_dict(checkpoint['net'])
@@ -281,7 +261,8 @@ elif args.train:
     result = {"train_loss": train_loss, "train_acc": train_acc, \
               "val_loss": val_loss, "val_acc": val_acc}
 
-    fn = "./output/{}_{}_start_epoch_{}_epochs_{}.pk".format(args.prefix, modelname, start_epoch, nepochs)
+    fn = "./output/{}_{}_start_epoch_{}_epochs_{}_noise{}.pk".format(
+        args.prefix, modelname, start_epoch, nepochs, args.noise_type)
     if not os.path.exists('./output/'):
         os.mkdir('./output/')
     with open(fn, 'wb') as fout:

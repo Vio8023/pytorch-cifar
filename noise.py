@@ -1,17 +1,27 @@
 import numpy as np
 import torch
 
-def noise_data(noise_type):
+def noise_data(noise_type, noise_prob):
+    """
+    noise_type: the noise function, can be gauss or s&p
+    noise_prob: the probability of the noise function, by default 1.0 implies no noise applied.
+    """
     if noise_type == "gauss":
         def _noise(image):
+            s = np.random.uniform()
+            if s < noise_prob:
+                return image
             image = image.numpy()
             mean, sigma = 0, 0.1
             gauss = np.random.normal(mean, sigma, image.shape)
             noisy = image + gauss
             return torch.FloatTensor(noisy)
-        
+
     elif noise_type == "s&p":
         def _noise(image):
+            s = np.random.uniform()
+            if s < noise_prob:
+                return image
             image = image.numpy()
             s_vs_p = 0.5
             amount = 0.004
@@ -27,18 +37,10 @@ def noise_data(noise_type):
                       for i in image.shape]
             out[tuple(coords)] = -1
             return torch.FloatTensor(out)
-        
-    elif noise_type == "speckle":
-        def _noise(image):
-            image = image.numpy()
-            row,col,ch = image.shape
-            gauss = np.random.randn(row,col,ch)
-            gauss = gauss.reshape(row,col,ch)        
-            noisy = image + image * gauss
-            return torch.FloatTensor(noisy)
+
     else:
         raise ValueError("the noise type {} is not defined".format(noise_type))
-        
+
     return _noise
 
 def recover_image(input_array):
